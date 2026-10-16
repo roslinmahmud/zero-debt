@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{% if acc %}Account setup{% else %}Set up your CC account{% endif %}</h1>
+
+<div class="panel">
+<form class="stack" method="post" action="/setup">
+  <div><label>Bank</label><input name="bank" required value="{{ acc.bank if acc else 'Islami Bank Bangladesh PLC' }}"></div>
+  <div><label>Account ref (last 4 digits only)</label><input name="account_ref" maxlength="4" pattern="\d{4}" inputmode="numeric" value="{{ acc.account_ref if acc else '' }}"></div>
+  <div><label>Limit (BDT)</label><input name="limit_bdt" required inputmode="decimal" value="{{ acc.limit_bdt if acc else '1000000' }}"></div>
+  <div><label>Day basis</label>
+    <select name="day_basis">
+      {% for b in (365, 360) %}<option value="{{ b }}" {% if acc and acc.day_basis == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+    </select></div>
+  <div><label>Posting frequency</label>
+    <select name="posting_frequency">
+      {% for f in ("monthly", "quarterly") %}<option {% if acc and acc.posting_frequency == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+    </select>
+    <div class="hint">Quarterly posts in Mar, Jun, Sep, Dec.</div></div>
+  <div><label>Posting day</label>
+    <select name="posting_day">
+      <option value="month_end">Month end</option>
+      {% for n in range(1, 32) %}<option value="{{ n }}" {% if acc and acc.posting_day == n|string %}selected{% endif %}>Day {{ n }}</option>{% endfor %}
+    </select></div>
+  <div><label>Posting grace (days)</label><input name="posting_grace_days" type="number" min="0" max="31" value="{{ acc.posting_grace_days if acc else 7 }}">
+    <div class="hint">A recorded profit posting up to this many days late still counts for the period.</div></div>
+  <div><label>Renewal date</label><input name="renewal_date" type="date" value="{{ acc.renewal_date or '' if acc else '' }}"></div>
+  <div><label>FX rate (BDT per EUR)</label><input name="fx_eur_bdt" inputmode="decimal" value="{{ acc.fx_eur_bdt or '' if acc else '' }}">
+    <div class="hint">Blank = use the latest deposit's FX rate.</div></div>
+  <div><label>Settlement fee (% of outstanding)</label><input name="settlement_fee_pct" inputmode="decimal" value="{{ acc.settlement_fee_pct if acc else '0' }}"></div>
+  <div><label>Reconciliation threshold (Tk)</label><input name="recon_threshold_bdt" inputmode="decimal" value="{{ acc.recon_threshold_bdt if acc else '10' }}"></div>
+
+  {% if not acc %}
+  <div class="full"><h2>Opening checkpoint</h2>
+    <p class="hint">Take this from your latest statement, ideally the balance right after a profit posting (so nothing is accrued yet).</p></div>
+  <div><label>Statement date</label><input name="opening_date" type="date" required></div>
+  <div><label>Balance on that date (BDT)</label><input name="opening_balance" required inputmode="decimal"></div>
+  <div><label>Profit rate (% p.a.)</label><input name="rate_pct" required inputmode="decimal"></div>
+  {% endif %}
+
+  <div class="full"><button>{% if acc %}Save{% else %}Create account{% endif %}</button></div>
+</form>
+</div>
+
+{% if acc %}
+<script>document.querySelector('select[name=posting_day]').value = {{ acc.posting_day|tojson }};</script>
+
+<h2>Profit rate history</h2>
+<div class="panel">
+  <table>
+    <thead><tr><th>Effective from</th><th class="n">Rate % p.a.</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rates %}
+      <tr><td>{{ r.effective_date }}</td><td class="n">{{ r.rate_pct }}</td>
+        <td class="n"><form class="inline" method="post" action="/rates/{{ r.id }}/delete" onsubmit="return confirm('Delete this rate?')"><button class="link">delete</button></form></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <form class="row" method="post" action="/rates" style="margin-top:.8rem">
+    <input name="effective_date" type="date" required style="max-width:12rem">
+    <input name="rate_pct" placeholder="Rate %" required inputmode="decimal" style="max-width:8rem">
+    <button>Add rate change</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

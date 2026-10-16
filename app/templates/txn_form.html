@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{% if t %}Edit transaction{% else %}New transaction{% endif %}</h1>
+<div class="panel">
+<form class="stack" method="post" enctype="multipart/form-data" action="{% if t %}/transactions/{{ t.id }}{% else %}/transactions{% endif %}">
+  <div><label>Value date (credited to the loan)</label><input name="date" type="date" required value="{{ t.date if t else today }}"></div>
+  <div><label>Type</label>
+    <select name="type" id="type">
+      {% for ty in types %}<option {% if t and t.type == ty %}selected{% endif %}>{{ ty }}</option>{% endfor %}
+    </select></div>
+  <div><label>Amount (BDT)</label><input name="amount_bdt" inputmode="decimal" value="{{ t.amount_bdt if t else '' }}">
+    <div class="hint">For deposits you can leave this blank and fill EUR + FX.</div></div>
+
+  <fieldset class="full" id="remit">
+    <legend>Remittance (deposits only, optional)</legend>
+    <div class="stack" style="display:grid">
+      <div><label>EUR sent</label><input name="eur_sent" inputmode="decimal" value="{{ t.eur_sent or '' if t else '' }}"></div>
+      <div><label>FX rate (BDT per EUR)</label><input name="fx_rate" inputmode="decimal" value="{{ t.fx_rate or '' if t else '' }}"></div>
+      <div><label>Transfer fee (EUR)</label><input name="transfer_fee_eur" inputmode="decimal" value="{{ t.transfer_fee_eur or '' if t else '' }}"></div>
+      <div><label>Method</label>
+        <select name="method"><option value="">–</option>
+          {% for mth in methods %}<option {% if t and t.method == mth %}selected{% endif %}>{{ mth }}</option>{% endfor %}
+        </select></div>
+      <div><label>Proof (pdf/png/jpg/webp, max 5 MB)</label><input name="proof" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp">
+        {% if t and t.proof_path %}<div class="hint"><a href="/transactions/{{ t.id }}/proof">current proof</a>
+          <label class="inline"><input type="checkbox" name="remove_proof" value="1"> remove</label></div>{% endif %}</div>
+    </div>
+  </fieldset>
+
+  <div class="full"><label>Note</label><textarea name="note">{{ t.note if t else '' }}</textarea></div>
+  <div class="full row"><button>Save</button> <a class="btn secondary" href="/transactions">Cancel</a></div>
+</form>
+{% if t %}
+<form method="post" action="/transactions/{{ t.id }}/delete" onsubmit="return confirm('Delete this transaction?')" style="margin-top:1rem">
+  <button class="link">Delete transaction</button>
+</form>
+{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const type = document.getElementById('type'), remit = document.getElementById('remit');
+  const sync = () => { remit.style.display = type.value === 'deposit' ? '' : 'none'; };
+  type.addEventListener('change', sync); sync();
+</script>
+{% endblock %}

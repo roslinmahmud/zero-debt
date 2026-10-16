@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>What-if simulator</h1>
+<p class="hint">Nothing here changes your real data. Projections start from today's computed state and include
+  any future-dated transactions you've recorded.</p>
+
+<div class="panel">
+<form method="get" action="/simulator">
+  <div class="scenarios">
+    {% for s in form.scenarios %}
+    <fieldset>
+      <legend>Scenario {{ loop.index }}</legend>
+      <label>Monthly deposit</label>
+      <div class="row">
+        <input name="s{{ loop.index }}_amount" inputmode="decimal" value="{{ s.amount }}" style="flex:1">
+        <select name="s{{ loop.index }}_currency" style="width:5.5rem">
+          {% for c in ("BDT", "EUR") %}<option {% if s.currency == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <label style="margin-top:.4rem">Deposit day of month</label>
+      <input name="s{{ loop.index }}_day" type="number" min="1" max="31" value="{{ s.day }}">
+    </fieldset>
+    {% endfor %}
+  </div>
+  <div class="stack" style="margin-top:1rem">
+    <div><label>FX assumption (BDT per EUR)</label><input name="fx" inputmode="decimal" value="{{ form.fx or '' }}"></div>
+    <div><label>Rate change: effective date</label><input name="rate_date" type="date" value="{{ form.rate_date }}"></div>
+    <div><label>Rate change: new rate %</label><input name="rate_pct" inputmode="decimal" value="{{ form.rate_pct }}"></div>
+    <div><label>Settle fully on date</label><input name="settle_date" type="date" value="{{ form.settle_date }}"></div>
+    <div class="full"><label>Lump sums (one per line: YYYY-MM-DD amount_in_BDT), applied to every scenario</label>
+      <textarea name="lumps" placeholder="2026-12-15 200000">{{ form.lumps }}</textarea></div>
+    <div class="full"><button>Run</button></div>
+  </div>
+</form>
+</div>
+
+{% if settle %}
+<div class="panel">
+  <h2 style="margin-top:0">Settlement on {{ settle.date.strftime("%d %b %Y") }}</h2>
+  <table>
+    <tr><td>Balance</td><td class="n">Tk {{ settle.balance|tk }}</td></tr>
+    <tr><td>Accrued profit up to that day</td><td class="n">Tk {{ settle.accrued|tk }}</td></tr>
+    <tr><td>Settlement fee</td><td class="n">Tk {{ settle.fee|tk }}</td></tr>
+    <tr><th>Total to pay</th><th class="n">Tk {{ settle.total|tk }}</th></tr>
+  </table>
+  <p class="hint">Includes only transactions recorded up to that date.</p>
+</div>
+{% endif %}
+
+{% if results %}
+<div class="panel">
+<table>
+  <thead><tr><th>Scenario</th><th>Payoff date</th><th class="n">Months</th><th class="n">Future profit</th><th class="n">Total deposited</th></tr></thead>
+  <tbody>
+  {% for r in results %}
+    <tr>
+      <td>{{ r.scenario.name }}</td>
+      <td>{% if r.payoff_date %}{{ r.payoff_date.strftime("%d %b %Y") }}{% else %}<span class="flag">Never (deposit ≤ profit)</span>{% endif %}</td>
+      <td class="n">{{ r.months if r.months is not none else '–' }}</td>
+      <td class="n">Tk {{ r.total_profit|tk }}</td>
+      <td class="n">Tk {{ r.total_deposited|tk }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="panel"><div class="chart-box"><canvas id="sim"></canvas></div></div>
+{% endif %}
+
+{% if insight %}
+<div class="panel">
+  <h2 style="margin-top:0">Timing insight</h2>
+  <p>With scenario 1's amount, depositing on <strong>day 1</strong> instead of <strong>day 25</strong> saves
+    <strong>Tk {{ insight.saving|tk }}</strong> in profit
+    {% if insight.early.payoff_date and insight.late.payoff_date %}
+      and pays off on {{ insight.early.payoff_date.strftime("%d %b %Y") }} instead of {{ insight.late.payoff_date.strftime("%d %b %Y") }}{% endif %}.</p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if results %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+<script>
+  const series = {{ chart|tojson }};
+  const colors = ['#0f766e', '#6366f1', '#b45309'];
+  const labels = [...new Set(series.flatMap(s => s.points.map(p => p.x)))].sort();
+  new Chart(document.getElementById('sim'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: series.map((s, i) => {
+        const byX = Object.fromEntries(s.points.map(p => [p.x, p.y]));
+        return { label: s.label, data: labels.map(x => byX[x] ?? null), borderColor: colors[i], pointRadius: 0, spanGaps: true };
+      }),
+    },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: { y: { ticks: { callback: v => 'Tk ' + Number(v).toLocaleString('en-IN') } }, x: { ticks: { maxTicksLimit: 12 } } },
+    },
+  });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Reconciliation</h1>
+<p class="hint">Gaps above Tk {{ threshold|tk }} are flagged. A consistent gap usually means the rate, day basis
+  ({{ acc.day_basis }}) or posting day ({{ acc.posting_day }}) is wrong. Record the bank's posting as a
+  <em>profit_posted</em> transaction to compare.</p>
+
+<h2>Profit per period</h2>
+<div class="panel">
+<table>
+  <thead><tr><th>Period</th><th class="n">Engine (Tk)</th><th class="n">Bank posted (Tk)</th><th class="n">Gap</th><th></th></tr></thead>
+  <tbody>
+  {% for p in postings %}
+    {% set flagged = p.gap is not none and p.gap|abs > threshold %}
+    <tr>
+      <td>{{ p.period_start }} → {{ p.date }}</td>
+      <td class="n">{{ p.computed|tk }}</td>
+      <td class="n">{% if p.actual is not none %}{{ p.actual|tk }}{% else %}<span class="muted">not recorded</span>{% endif %}</td>
+      <td class="n {% if flagged %}flag{% elif p.gap is not none %}ok{% endif %}">{% if p.gap is not none %}{{ p.gap|tk }}{% endif %}</td>
+      <td>{% if flagged %}<span class="badge warn">check</span>{% elif p.estimated %}<span class="badge">estimated</span>{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5" class="muted">No posting periods yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Checkpoints vs engine</h2>
+<div class="panel">
+<table>
+  <thead><tr><th>Date</th><th class="n">Engine balance</th><th class="n">Statement</th><th class="n">Gap</th></tr></thead>
+  <tbody>
+  {% for c in diffs %}
+    <tr><td>{{ c.date }}</td><td class="n">{{ c.computed|tk }}</td><td class="n">{{ c.statement|tk }}</td>
+      <td class="n {% if c.gap|abs > threshold %}flag{% else %}ok{% endif %}">{{ c.gap|tk }}</td></tr>
+  {% else %}
+    <tr><td colspan="4" class="muted">Add a second checkpoint to compare.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

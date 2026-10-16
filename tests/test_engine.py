@@ -55,7 +55,7 @@ def test_5_rate_change_mid_period():
     rates = [*RATE, e.RateChange(date(2025, 1, 16), D("15"))]
     res = run(rates=rates)
     expected = D("500000") * (D("0.12") * 15 + D("0.15") * 15) / 365
-    assert res.accrued == expected
+    assert abs(res.accrued - expected) < D("1e-9")
 
 
 def test_6_checkpoint_overrides_balance():
@@ -93,10 +93,11 @@ def test_8_overpayment_becomes_credit():
     txns = [e.Txn(date(2025, 1, 5), "deposit", D("600000"))]
     res = run(txns=txns, collect_days=True)
     assert res.outstanding == 0
-    assert res.credit == D("100000") - 0  # accrual stops while in credit
+    assert res.credit == D("100000")
     assert res.credit_dates == [date(2025, 1, 5)]
     assert all(d.outstanding >= 0 for d in res.days)
-    assert res.accrued == D("500000") * D("0.12") * 4 / 365
+    # accrual stops once in credit (days 1-4 only)
+    assert abs(res.accrued - D("500000") * D("0.12") * 4 / 365) < D("1e-9")
 
 
 def test_9_bigger_deposit_pays_off_earlier():

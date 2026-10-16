@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Transactions</h1>
+<div class="row" style="margin-bottom:.8rem">
+  <a class="btn" href="/transactions/new">+ Add</a>
+  <form method="get" class="row">
+    <select name="type" onchange="this.form.submit()" style="max-width:12rem">
+      <option value="">All types</option>
+      {% for t in types %}<option {% if t == selected %}selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+<div class="panel">
+<table>
+  <thead><tr><th>Value date</th><th>Type</th><th class="n">Amount (Tk)</th><th class="n">EUR</th><th>Method</th><th>Note</th><th></th></tr></thead>
+  <tbody>
+  {% for t in rows %}
+    <tr>
+      <td>{{ t.date }}</td>
+      <td><span class="badge">{{ t.type }}</span></td>
+      <td class="n {% if t.type == 'deposit' %}neg{% else %}pos{% endif %}">{% if t.type == 'deposit' %}-{% else %}+{% endif %}{{ t.amount_bdt|tk }}</td>
+      <td class="n">{% if t.eur_sent %}€{{ t.eur_sent|num }}{% if t.fx_rate %}<div class="hint">@ {{ t.fx_rate }}</div>{% endif %}{% endif %}</td>
+      <td>{{ t.method or '' }}</td>
+      <td>{{ t.note }}{% if t.proof_path %} <a href="/transactions/{{ t.id }}/proof">proof</a>{% endif %}</td>
+      <td class="n"><a href="/transactions/{{ t.id }}/edit">edit</a></td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="muted">No transactions yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="hint">Deposits reduce the outstanding (green); everything else increases it.</p>
+{% endblock %}

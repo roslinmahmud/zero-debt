@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Statement checkpoints</h1>
+<p class="hint">The bank's official end-of-day balance on a date. From that date the engine restarts from the bank's figure
+  (transactions on the same day are assumed to be included).</p>
+<div class="panel">
+  <form class="row" method="post" action="/checkpoints">
+    <input name="date" type="date" required value="{{ today }}" style="max-width:12rem">
+    <input name="balance_bdt" placeholder="Balance (Tk)" required inputmode="decimal" style="max-width:12rem">
+    <input name="note" placeholder="Note (e.g. statement page)" style="max-width:20rem">
+    <button>Add checkpoint</button>
+  </form>
+</div>
+<div class="panel">
+<table>
+  <thead><tr><th>Date</th><th class="n">Balance (Tk)</th><th>Note</th><th></th></tr></thead>
+  <tbody>
+  {% for c in rows %}
+    <tr><td>{{ c.date }}</td><td class="n">{{ c.balance_bdt|tk }}</td><td>{{ c.note }}</td>
+      <td class="n"><form class="inline" method="post" action="/checkpoints/{{ c.id }}/delete" onsubmit="return confirm('Delete this checkpoint?')"><button class="link">delete</button></form></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

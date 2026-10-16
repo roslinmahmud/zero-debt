@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Data</h1>
+<div class="panel">
+  <h2 style="margin-top:0">Export</h2>
+  <p class="row">
+    <a class="btn" href="/export.json">All data (JSON)</a>
+    <a class="btn secondary" href="/export/transactions.csv">Transactions (CSV)</a>
+  </p>
+  <p class="hint">Proof uploads are not included; back up the <code>data/</code> folder for those.</p>
+</div>
+<div class="panel">
+  <h2 style="margin-top:0">Import from JSON</h2>
+  <form method="post" action="/import" enctype="multipart/form-data" class="stack">
+    <div class="full"><input type="file" name="file" accept=".json,application/json" required></div>
+    <div class="full"><label class="inline"><input type="checkbox" name="confirm" value="yes"> I understand this <strong>replaces all</strong> existing data</label></div>
+    <div class="full"><button>Import</button></div>
+  </form>
+</div>
+{% endblock %}
