@@ -132,16 +132,18 @@ def avg_monthly_deposit(lg: Ledger, today: date, days: int = 90) -> Decimal:
     return eng.q2(total * 30 / days)
 
 
-def chart_data(lg: Ledger, today: date) -> dict:
+def chart_data(lg: Ledger, today: date, monthly: Decimal | None = None, deposit_day: int = 1) -> dict:
     res = history(lg, today, collect_days=True)
     actual = [{"x": d.date.isoformat(), "y": float(d.outstanding)} for d in res.days]
 
-    monthly = avg_monthly_deposit(lg, today)
+    is_average = monthly is None
+    if monthly is None:
+        monthly = avg_monthly_deposit(lg, today)
     sim = eng.simulate(
         state=res,
         cfg=lg.cfg,
         rate_changes=lg.rates,
-        scenario=eng.Scenario("trend", monthly),
+        scenario=eng.Scenario("plan", monthly, deposit_day),
         future_txns=[t for t in lg.txns if t.date > today],
         horizon_days=365 * 10,
     )
@@ -153,7 +155,15 @@ def chart_data(lg: Ledger, today: date) -> dict:
         cumulative.append({"x": p.date.isoformat(), "y": float(running)})
 
     return {
-        "outstanding": {"actual": actual, "projected": projected, "monthly": float(monthly)},
+        "outstanding": {
+            "actual": actual,
+            "projected": projected,
+            "monthly": float(monthly),
+            "deposit_day": deposit_day,
+            "is_average": is_average,
+            "payoff": sim.payoff_date.isoformat() if sim.payoff_date else None,
+            "future_profit": float(sim.total_profit),
+        },
         "postings": [
             {"x": p.date.isoformat(), "y": float(p.amount), "estimated": p.estimated} for p in res.postings
         ],

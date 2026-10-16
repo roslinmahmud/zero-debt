@@ -60,6 +60,11 @@ def test_redirects_to_setup_then_full_flow(client):
 
     data = client.get("/api/charts").json()
     assert data["outstanding"]["actual"] and "eur_cost" not in data
+    assert data["outstanding"]["is_average"]
+    planned = client.get("/api/charts?monthly=100000&day=5").json()["outstanding"]
+    assert planned["monthly"] == 100000 and planned["deposit_day"] == 5 and not planned["is_average"]
+    assert planned["payoff"]
+    assert client.get("/api/charts?monthly=abc").status_code == 400
 
     exported = client.get("/export.json").json()
     assert exported["account"]["account_ref"] == "1234"

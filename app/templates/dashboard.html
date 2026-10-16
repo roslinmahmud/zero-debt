@@ -71,6 +71,13 @@
 
 <section>
 <div class="panel"><h2 style="margin-top:0">Outstanding over time</h2>
+  <form id="proj-form" class="row" style="margin-bottom:.5rem">
+    <label class="inline" for="proj-monthly" style="margin:0">Tk per month</label>
+    <input id="proj-monthly" name="monthly" inputmode="decimal" placeholder="e.g. 50000" style="max-width:9rem">
+    <label class="inline" for="proj-day" style="margin:0">on day</label>
+    <input id="proj-day" name="day" type="number" min="1" max="31" value="1" style="max-width:4.5rem">
+    <button>Project</button>
+  </form>
   <p class="hint" id="proj-note"></p>
   <div class="chart-box"><canvas id="outstanding"></canvas></div></div>
 <div class="panel"><h2 style="margin-top:0">Profit posted per period</h2><div class="chart-box"><canvas id="postings"></canvas></div></div>
@@ -80,5 +87,5 @@
 {% endblock %}
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
-<script src="/static/charts.js"></script>
+<script src="/static/charts.js?v=2"></script>
 {% endblock %}

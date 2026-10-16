@@ -439,8 +439,12 @@ def charts():
 
 
 @app.get("/api/charts")
-def charts_data(lg: services.Ledger = Depends(require_ledger)):
-    return JSONResponse(services.chart_data(lg, date.today()))
+def charts_data(monthly: str = "", day: str = "1", lg: services.Ledger = Depends(require_ledger)):
+    amount = num(monthly, "Monthly deposit", optional=True)
+    dep_day = int(num(day, "Deposit day") or 1)
+    if not 1 <= dep_day <= 31:
+        raise FormError("Deposit day must be 1–31")
+    return JSONResponse(services.chart_data(lg, date.today(), amount, dep_day))
 
 
 # ---------------------------------------------------------------- simulator
