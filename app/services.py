@@ -75,13 +75,6 @@ def history(lg: Ledger, as_of: date, collect_days: bool = False) -> eng.Result:
     )
 
 
-def fx_rate(lg: Ledger) -> Decimal | None:
-    if lg.account.fx_eur_bdt:
-        return lg.account.fx_eur_bdt
-    with_fx = [t for t in lg.db_txns if t.fx_rate]
-    return with_fx[-1].fx_rate if with_fx else None
-
-
 def dashboard(lg: Ledger, today: date) -> dict:
     acc = lg.account
     res = history(lg, today)
@@ -96,12 +89,10 @@ def dashboard(lg: Ledger, today: date) -> dict:
         txns=[t for t in lg.txns if t.date > today],
     )
     est_posting = ahead.postings[-1].amount if ahead.postings else ZERO
-    fx = fx_rate(lg)
 
     past = [t for t in lg.db_txns if t.date <= today]
     deposited = sum((t.amount_bdt for t in past if t.type == "deposit"), ZERO)
     charges = sum((t.amount_bdt for t in past if t.type in eng.CHARGE_TYPES), ZERO)
-    eur_sent = sum(((t.eur_sent or ZERO) + (t.transfer_fee_eur or ZERO) for t in past if t.type == "deposit"), ZERO)
     profit_paid = sum((p.amount for p in res.postings), ZERO)
 
     last_gap = None
@@ -113,8 +104,6 @@ def dashboard(lg: Ledger, today: date) -> dict:
         "today": today,
         "outstanding": res.outstanding,
         "credit": res.credit,
-        "outstanding_eur": (res.outstanding / fx) if fx else None,
-        "fx": fx,
         "accrued": eng.q2(res.accrued),
         "rate_pct": res.rate_pct,
         "next_posting": next_post,
@@ -126,7 +115,6 @@ def dashboard(lg: Ledger, today: date) -> dict:
         "deposited": deposited,
         "charges": charges,
         "profit_paid": profit_paid,
-        "eur_sent": eur_sent,
         "last_gap": last_gap,
         "threshold": acc.recon_threshold_bdt,
         "settlement": eng.settlement_quote(res, acc.settlement_fee_pct),
@@ -164,25 +152,12 @@ def chart_data(lg: Ledger, today: date) -> dict:
         running += p.amount
         cumulative.append({"x": p.date.isoformat(), "y": float(running)})
 
-    eur_cost = []
-    for t in lg.db_txns:
-        if t.type == "deposit" and t.eur_sent:
-            total_eur = t.eur_sent + (t.transfer_fee_eur or ZERO)
-            eur_cost.append(
-                {
-                    "x": t.date.isoformat(),
-                    "eur": float(total_eur),
-                    "effective": float(eng.q2(t.amount_bdt / total_eur)),
-                }
-            )
-
     return {
         "outstanding": {"actual": actual, "projected": projected, "monthly": float(monthly)},
         "postings": [
             {"x": p.date.isoformat(), "y": float(p.amount), "estimated": p.estimated} for p in res.postings
         ],
         "cumulative": cumulative,
-        "eur_cost": eur_cost,
     }
 
 

@@ -30,7 +30,7 @@ def test_redirects_to_setup_then_full_flow(client):
         data={
             "bank": "Islami Bank Bangladesh PLC", "account_ref": "1234", "limit_bdt": "1000000",
             "day_basis": "365", "posting_frequency": "monthly", "posting_day": "month_end",
-            "posting_grace_days": "7", "renewal_date": str(TODAY + timedelta(days=20)), "fx_eur_bdt": "130",
+            "posting_grace_days": "7", "renewal_date": str(TODAY + timedelta(days=20)),
             "settlement_fee_pct": "0.5", "recon_threshold_bdt": "10",
             "opening_date": str(opening), "opening_balance": "500000", "rate_pct": "12",
         },
@@ -39,8 +39,8 @@ def test_redirects_to_setup_then_full_flow(client):
 
     r = client.post(
         "/transactions",
-        data={"date": str(TODAY - timedelta(days=10)), "type": "deposit", "eur_sent": "300", "fx_rate": "135",
-              "transfer_fee_eur": "2", "method": "Wise", "note": "monthly"},
+        data={"date": str(TODAY - timedelta(days=10)), "type": "deposit", "amount_bdt": "40500",
+              "method": "Wise", "note": "monthly"},
         files={"proof": ("receipt.png", b"\x89PNG fake", "image/png")},
     )
     assert r.status_code == 200
@@ -53,13 +53,13 @@ def test_redirects_to_setup_then_full_flow(client):
     assert r.status_code == 200
 
     for url in ("/", "/transactions", "/checkpoints", "/reconciliation", "/setup", "/data",
-                "/simulator", f"/simulator?s1_amount=300&s1_currency=EUR&s1_day=5&s2_amount=50000&s2_day=1"
-                f"&s3_amount=&fx=130&settle_date={TODAY + timedelta(days=30)}&lumps=2030-01-01+10000"):
+                "/simulator", f"/simulator?s1_amount=30000&s1_day=5&s2_amount=50000&s2_day=1"
+                f"&s3_amount=&settle_date={TODAY + timedelta(days=30)}&lumps=2030-01-01+10000"):
         r = client.get(url)
         assert r.status_code == 200, url
 
     data = client.get("/api/charts").json()
-    assert data["outstanding"]["actual"] and data["eur_cost"][0]["effective"] > 0
+    assert data["outstanding"]["actual"] and "eur_cost" not in data
 
     exported = client.get("/export.json").json()
     assert exported["account"]["account_ref"] == "1234"

@@ -24,8 +24,6 @@
   <div><label>Posting grace (days)</label><input name="posting_grace_days" type="number" min="0" max="31" value="{{ acc.posting_grace_days if acc else 7 }}">
     <div class="hint">A recorded profit posting up to this many days late still counts for the period.</div></div>
   <div><label>Renewal date</label><input name="renewal_date" type="date" value="{{ acc.renewal_date or '' if acc else '' }}"></div>
-  <div><label>FX rate (BDT per EUR)</label><input name="fx_eur_bdt" inputmode="decimal" value="{{ acc.fx_eur_bdt or '' if acc else '' }}">
-    <div class="hint">Blank = use the latest deposit's FX rate.</div></div>
   <div><label>Settlement fee (% of outstanding)</label><input name="settlement_fee_pct" inputmode="decimal" value="{{ acc.settlement_fee_pct if acc else '0' }}"></div>
   <div><label>Reconciliation threshold (Tk)</label><input name="recon_threshold_bdt" inputmode="decimal" value="{{ acc.recon_threshold_bdt if acc else '10' }}"></div>
 

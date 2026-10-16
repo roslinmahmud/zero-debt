@@ -15,10 +15,10 @@ from app import models as m
 
 ACCOUNT_FIELDS = (
     "bank", "account_ref", "limit_bdt", "day_basis", "posting_frequency", "posting_day",
-    "posting_grace_days", "renewal_date", "currency", "fx_eur_bdt", "settlement_fee_pct", "recon_threshold_bdt",
+    "posting_grace_days", "renewal_date", "currency", "settlement_fee_pct", "recon_threshold_bdt",
 )
 TXN_FIELDS = (
-    "date", "type", "amount_bdt", "eur_sent", "fx_rate", "transfer_fee_eur", "method", "note",
+    "date", "type", "amount_bdt", "method", "note",
 )
 
 
@@ -91,7 +91,6 @@ def import_json(db: Session, data: dict) -> None:
         posting_grace_days=int(a.get("posting_grace_days", 7)),
         renewal_date=_date(a.get("renewal_date"), optional=True),
         currency=str(a.get("currency") or "BDT")[:3],
-        fx_eur_bdt=_d(a.get("fx_eur_bdt"), optional=True),
         settlement_fee_pct=_d(a.get("settlement_fee_pct") or "0"),
         recon_threshold_bdt=_d(a.get("recon_threshold_bdt") or "10"),
     )
@@ -112,9 +111,6 @@ def import_json(db: Session, data: dict) -> None:
                 date=_date(t["date"]),
                 type=t["type"],
                 amount_bdt=_d(t["amount_bdt"]),
-                eur_sent=_d(t.get("eur_sent"), optional=True),
-                fx_rate=_d(t.get("fx_rate"), optional=True),
-                transfer_fee_eur=_d(t.get("transfer_fee_eur"), optional=True),
                 method=(str(t["method"])[:30] if t.get("method") else None),
                 note=str(t.get("note") or ""),
             )

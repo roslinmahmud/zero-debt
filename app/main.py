@@ -199,7 +199,6 @@ def setup_save(
     posting_day: str = Form("month_end"),
     posting_grace_days: int = Form(7),
     renewal_date: str = Form(""),
-    fx_eur_bdt: str = Form(""),
     settlement_fee_pct: str = Form("0"),
     recon_threshold_bdt: str = Form("10"),
     opening_date: str = Form(""),
@@ -227,7 +226,6 @@ def setup_save(
     acc.posting_day = posting_day
     acc.posting_grace_days = posting_grace_days
     acc.renewal_date = day(renewal_date, "Renewal date", optional=True)
-    acc.fx_eur_bdt = num(fx_eur_bdt, "FX rate", optional=True)
     acc.settlement_fee_pct = num(settlement_fee_pct, "Settlement fee") or Decimal("0")
     acc.recon_threshold_bdt = num(recon_threshold_bdt, "Reconciliation threshold")
 
@@ -327,10 +325,7 @@ async def txn_save(
     lg: services.Ledger = Depends(require_ledger),
     date_: str = Form(..., alias="date"),
     type: str = Form(...),
-    amount_bdt: str = Form(""),
-    eur_sent: str = Form(""),
-    fx_rate: str = Form(""),
-    transfer_fee_eur: str = Form(""),
+    amount_bdt: str = Form(...),
     method: str = Form(""),
     note: str = Form(""),
     remove_proof: str = Form(""),
@@ -338,13 +333,7 @@ async def txn_save(
 ):
     if type not in eng.TXN_TYPES:
         raise FormError("Unknown transaction type")
-    eur = num(eur_sent, "EUR sent", optional=True)
-    fx = num(fx_rate, "FX rate", optional=True)
-    amount = num(amount_bdt, "Amount (BDT)", optional=True)
-    if amount is None:
-        if eur is None or fx is None:
-            raise FormError("Amount (BDT) is required (or give EUR sent and FX rate)")
-        amount = eng.q2(eur * fx)
+    amount = num(amount_bdt, "Amount (BDT)")
     if method and method not in METHODS:
         raise FormError("Unknown method")
 
@@ -357,11 +346,7 @@ async def txn_save(
     t.date = day(date_, "Date")
     t.type = type
     t.amount_bdt = amount
-    is_deposit = type == "deposit"
-    t.eur_sent = eur if is_deposit else None
-    t.fx_rate = fx if is_deposit else None
-    t.transfer_fee_eur = num(transfer_fee_eur, "Transfer fee", optional=True) if is_deposit else None
-    t.method = (method or None) if is_deposit else None
+    t.method = (method or None) if type == "deposit" else None
     t.note = note.strip()[:2000]
 
     new_proof = await _save_proof(proof)
@@ -479,9 +464,7 @@ def simulator(request: Request, lg: services.Ledger = Depends(require_ledger)):
     q = request.query_params
     today = date.today()
     submitted = "s1_amount" in q
-    fx = num(q.get("fx"), "FX assumption", optional=True) or services.fx_rate(lg)
     form = {
-        "fx": fx,
         "lumps": q.get("lumps", ""),
         "rate_date": q.get("rate_date", ""),
         "rate_pct": q.get("rate_pct", ""),
@@ -493,25 +476,18 @@ def simulator(request: Request, lg: services.Ledger = Depends(require_ledger)):
     if form["rate_date"] or form["rate_pct"]:
         extra_rates = (eng.RateChange(day(form["rate_date"], "Rate change date"), num(form["rate_pct"], "New rate")),)
 
-    defaults = (("30000", "BDT"), ("50000", "BDT"), ("80000", "BDT"))
+    defaults = ("30000", "50000", "80000")
     scenarios = []
     for i in (1, 2, 3):
-        amount = q.get(f"s{i}_amount", "" if submitted else defaults[i - 1][0])
-        currency = q.get(f"s{i}_currency", defaults[i - 1][1])
+        amount = q.get(f"s{i}_amount", "" if submitted else defaults[i - 1])
         dep_day = int(num(q.get(f"s{i}_day", "1"), "Deposit day") or 1)
         if not 1 <= dep_day <= 31:
             raise FormError("Deposit day must be 1–31")
-        form["scenarios"].append({"amount": amount, "currency": currency, "day": dep_day})
+        form["scenarios"].append({"amount": amount, "day": dep_day})
         value = num(amount, f"Scenario {i} amount", optional=True)
         if value is None:
             continue
-        if currency == "EUR":
-            if not fx:
-                raise FormError("An FX assumption is needed for EUR scenarios")
-            label = f"€{value:,.0f}/mo (day {dep_day})"
-            value = eng.q2(value * fx)
-        else:
-            label = f"Tk {fmt_bdt(value, 0)}/mo (day {dep_day})"
+        label = f"Tk {fmt_bdt(value, 0)}/mo (day {dep_day})"
         scenarios.append(eng.Scenario(label, value, dep_day, lumps, extra_rates))
 
     results = services.run_scenarios(lg, today, scenarios)

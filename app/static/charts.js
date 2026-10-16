@@ -48,23 +48,4 @@
     },
     options: { maintainAspectRatio: false, scales: { y: money }, plugins: { tooltip } },
   });
-
-  const eur = data.eur_cost;
-  new Chart(document.getElementById('eur'), {
-    type: 'bar',
-    data: {
-      labels: eur.map(p => p.x),
-      datasets: [
-        { label: 'Effective BDT per EUR', data: eur.map(p => p.effective), backgroundColor: '#0f766e', yAxisID: 'y' },
-        { label: 'EUR spent (incl. fee)', data: eur.map(p => p.eur), type: 'line', borderColor: '#6366f1', yAxisID: 'y1' },
-      ],
-    },
-    options: {
-      maintainAspectRatio: false,
-      scales: {
-        y: { position: 'left', beginAtZero: false },
-        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => '€' + v } },
-      },
-    },
-  });
 })();

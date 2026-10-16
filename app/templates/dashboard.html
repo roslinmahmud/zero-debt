@@ -6,9 +6,6 @@
   <div class="card big">
     <div class="label">Outstanding</div>
     <div class="value">Tk {{ d.outstanding|tk }}</div>
-    <div class="sub">
-      {% if d.outstanding_eur is not none %}≈ €{{ d.outstanding_eur|num }} @ {{ d.fx|num }}{% else %}Set an FX rate to see EUR{% endif %}
-    </div>
     {% if d.credit > 0 %}<div class="flag">Credit balance: Tk {{ d.credit|tk }}</div>{% endif %}
   </div>
   <div class="card">
@@ -57,8 +54,7 @@
 
 <h2>Lifetime totals <span class="hint">(since opening checkpoint)</span></h2>
 <div class="grid">
-  <div class="card"><div class="label">Deposited</div><div class="value">Tk {{ d.deposited|tk }}</div>
-    <div class="sub">EUR actually sent: €{{ d.eur_sent|num }}</div></div>
+  <div class="card"><div class="label">Deposited</div><div class="value">Tk {{ d.deposited|tk }}</div></div>
   <div class="card"><div class="label">Profit paid</div><div class="value">Tk {{ d.profit_paid|tk }}</div></div>
   <div class="card"><div class="label">Charges paid</div><div class="value">Tk {{ d.charges|tk }}</div>
     <div class="sub">Excise, fees, compensation, other</div></div>
@@ -76,9 +72,6 @@
   <div class="chart-box"><canvas id="outstanding"></canvas></div></div>
 <div class="panel"><h2 style="margin-top:0">Profit posted per period</h2><div class="chart-box"><canvas id="postings"></canvas></div></div>
 <div class="panel"><h2 style="margin-top:0">Cumulative profit paid</h2><div class="chart-box"><canvas id="cumulative"></canvas></div></div>
-<div class="panel"><h2 style="margin-top:0">EUR cost per deposit</h2>
-  <p class="hint">Effective rate = BDT credited ÷ (EUR sent + transfer fee). Higher is better.</p>
-  <div class="chart-box"><canvas id="eur"></canvas></div></div>
 {% endblock %}
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>

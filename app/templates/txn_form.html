@@ -8,15 +8,11 @@
     <select name="type" id="type">
       {% for ty in types %}<option {% if t and t.type == ty %}selected{% endif %}>{{ ty }}</option>{% endfor %}
     </select></div>
-  <div><label>Amount (BDT)</label><input name="amount_bdt" inputmode="decimal" value="{{ t.amount_bdt if t else '' }}">
-    <div class="hint">For deposits you can leave this blank and fill EUR + FX.</div></div>
+  <div><label>Amount (BDT)</label><input name="amount_bdt" required inputmode="decimal" value="{{ t.amount_bdt if t else '' }}"></div>
 
   <fieldset class="full" id="remit">
-    <legend>Remittance (deposits only, optional)</legend>
+    <legend>Deposit details (optional)</legend>
     <div class="stack" style="display:grid">
-      <div><label>EUR sent</label><input name="eur_sent" inputmode="decimal" value="{{ t.eur_sent or '' if t else '' }}"></div>
-      <div><label>FX rate (BDT per EUR)</label><input name="fx_rate" inputmode="decimal" value="{{ t.fx_rate or '' if t else '' }}"></div>
-      <div><label>Transfer fee (EUR)</label><input name="transfer_fee_eur" inputmode="decimal" value="{{ t.transfer_fee_eur or '' if t else '' }}"></div>
       <div><label>Method</label>
         <select name="method"><option value="">–</option>
           {% for mth in methods %}<option {% if t and t.method == mth %}selected{% endif %}>{{ mth }}</option>{% endfor %}
