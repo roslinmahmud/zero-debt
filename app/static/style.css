@@ -17,6 +17,13 @@ nav { display: flex; flex-wrap: wrap; gap: .25rem .9rem; font-size: .92rem; }
 nav a { opacity: .9; }
 nav a:hover { opacity: 1; text-decoration: underline; }
 main { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+main:has(.dash) { max-width: 1440px; }
+.dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 1.2rem; align-items: start; }
+.dash .grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.dash .chart-box { height: 260px; }
+.dash .card .value { font-size: 1.15rem; }
+.dash .card.big .value { font-size: 1.4rem; }
+@media (max-width: 900px) { .dash { grid-template-columns: 1fr; } }
 h1 { font-size: 1.4rem; margin: .5rem 0 1rem; }
 h2 { font-size: 1.1rem; margin: 1.5rem 0 .6rem; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .8rem; }
