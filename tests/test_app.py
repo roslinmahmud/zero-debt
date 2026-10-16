@@ -52,7 +52,7 @@ def test_redirects_to_setup_then_full_flow(client):
     r = client.post("/checkpoints", data={"date": str(TODAY - timedelta(days=5)), "balance_bdt": "470000"})
     assert r.status_code == 200
 
-    for url in ("/", "/transactions", "/checkpoints", "/reconciliation", "/charts", "/setup", "/data",
+    for url in ("/", "/transactions", "/checkpoints", "/reconciliation", "/setup", "/data",
                 "/simulator", f"/simulator?s1_amount=300&s1_currency=EUR&s1_day=5&s2_amount=50000&s2_day=1"
                 f"&s3_amount=&fx=130&settle_date={TODAY + timedelta(days=30)}&lumps=2030-01-01+10000"):
         r = client.get(url)

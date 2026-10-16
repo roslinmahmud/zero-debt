@@ -448,9 +448,9 @@ def reconciliation(request: Request, lg: services.Ledger = Depends(require_ledge
 # ---------------------------------------------------------------- charts
 
 
-@app.get("/charts", response_class=HTMLResponse)
-def charts(request: Request, lg: services.Ledger = Depends(require_ledger)):
-    return templates.TemplateResponse(request, "charts.html", {})
+@app.get("/charts")
+def charts():
+    return redirect("/")
 
 
 @app.get("/api/charts")

@@ -69,4 +69,18 @@
   <a class="btn secondary" href="/checkpoints">+ Statement checkpoint</a>
   <a class="btn secondary" href="/simulator">What-if</a>
 </p>
+
+<h2>Charts</h2>
+<div class="panel"><h2 style="margin-top:0">Outstanding over time</h2>
+  <p class="hint" id="proj-note"></p>
+  <div class="chart-box"><canvas id="outstanding"></canvas></div></div>
+<div class="panel"><h2 style="margin-top:0">Profit posted per period</h2><div class="chart-box"><canvas id="postings"></canvas></div></div>
+<div class="panel"><h2 style="margin-top:0">Cumulative profit paid</h2><div class="chart-box"><canvas id="cumulative"></canvas></div></div>
+<div class="panel"><h2 style="margin-top:0">EUR cost per deposit</h2>
+  <p class="hint">Effective rate = BDT credited ÷ (EUR sent + transfer fee). Higher is better.</p>
+  <div class="chart-box"><canvas id="eur"></canvas></div></div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+<script src="/static/charts.js"></script>
 {% endblock %}
